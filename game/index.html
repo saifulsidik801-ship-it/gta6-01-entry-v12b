@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AZURA BAY — City of Glass and Gold</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: Arial, Helvetica, sans-serif; }
+  canvas { display: block; }
+  .hud { position: fixed; inset: 0; pointer-events: none; color: #fff; z-index: 5; }
+  .panel { background: rgba(10, 12, 18, 0.72); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 10px; padding: 10px 12px; }
+  /* mission, top-left */
+  .mission { position: absolute; top: 14px; left: 14px; width: 330px; }
+  .mission-top { display: flex; gap: 8px; align-items: center; }
+  .stage { background: #f2a007; color: #111; font-weight: 800; font-size: 12px; padding: 2px 8px; border-radius: 5px; }
+  .mission-id { font-weight: 800; font-size: 13px; letter-spacing: 0.5px; color: #ffd23e; }
+  .mission-title { font-size: 30px; font-weight: 900; line-height: 1.05; margin-top: 6px; text-shadow: 0 2px 0 rgba(0,0,0,0.4); }
+  .mission-bar { height: 5px; background: rgba(255,255,255,0.25); border-radius: 3px; margin: 8px 0 6px; }
+  .mission-fill { height: 100%; background: #37d67a; border-radius: 3px; width: 75%; }
+  .mission-obj { font-size: 13px; line-height: 1.35; color: #e8e8e8; }
+  .mission-next { font-size: 12px; margin-top: 6px; color: #cfd8e3; }
+  .mission-next b { color: #ffd23e; }
+  /* police response, left-mid */
+  .apd { position: absolute; top: 218px; left: 14px; width: 330px; }
+  .apd-head { display: flex; justify-content: space-between; font-weight: 800; font-size: 13px; color: #ff8a8a; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .apd-head .apd-count { color: #fff; }
+  .apd-row { display: flex; gap: 8px; font-size: 12.5px; padding: 3px 0; align-items: center; }
+  .apd-row .dot { width: 8px; height: 8px; border-radius: 50%; background: #37d67a; flex: none; }
+  .apd-row:nth-child(3) .dot, .apd-row:nth-child(4) .dot, .apd-row:nth-child(5) .dot { background: #ff5a5a; }
+  .apd-row .unit { font-weight: 800; width: 74px; }
+  .apd-row .role { color: #9fd8ff; flex: 1; }
+  .apd-row .dist { color: #ffd23e; font-weight: 700; }
+  .apd-more { font-size: 12px; color: #9aa7b5; margin-top: 2px; }
+  .apd-clear { font-size: 12.5px; color: #37d67a; font-weight: 700; padding: 4px 0; }
+  /* bottom-left: district + minimap + vitals */
+  .bl { position: absolute; left: 14px; bottom: 14px; width: 230px; }
+  .district { font-size: 24px; font-weight: 900; letter-spacing: 0.5px; text-shadow: 0 2px 0 rgba(0,0,0,0.5); white-space: nowrap; }
+  .street { font-size: 13px; color: #d5dde6; margin: 2px 0 6px; }
+  .district-bar { height: 5px; background: rgba(255,255,255,0.25); border-radius: 3px; margin-bottom: 8px; }
+  .district-fill { height: 100%; width: 62%; background: #37d67a; border-radius: 3px; }
+  .minimap { width: 210px; height: 130px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); }
+  .vitals { margin-top: 8px; }
+  .vital { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; margin-top: 4px; }
+  .vital span { width: 52px; color: #d5dde6; }
+  .vital .bar { flex: 1; height: 8px; background: rgba(255,255,255,0.25); border-radius: 4px; }
+  .vital .fill { height: 100%; border-radius: 4px; }
+  .fill.health { background: #37d67a; }
+  .fill.armour { background: #3e8ef7; }
+  .vital b { width: 22px; text-align: right; }
+  /* top-right: clock, cash, stars */
+  .tr { position: absolute; top: 12px; right: 16px; text-align: right; }
+  .clock { font-size: 15px; font-weight: 700; color: #e8f2ff; }
+  .cash { font-size: 42px; font-weight: 900; color: #37d67a; line-height: 1; text-shadow: 0 2px 0 rgba(0,0,0,0.5); }
+  .stars { font-size: 22px; letter-spacing: 3px; color: #ffd23e; margin-top: 2px; }
+  .airunit { font-size: 11px; font-weight: 800; color: #ff8a8a; letter-spacing: 1px; margin-top: 2px; }
+  /* right-mid: rank, weapons, crew */
+  .rm { position: absolute; top: 138px; right: 14px; width: 300px; }
+  .rank { margin-bottom: 8px; }
+  .rank-row { display: flex; justify-content: space-between; font-weight: 900; }
+  .rank-letter { color: #37d67a; font-size: 15px; }
+  .rank-title { color: #ffd23e; font-size: 15px; }
+  .rank-bar { height: 6px; background: rgba(255,255,255,0.25); border-radius: 3px; margin: 7px 0 4px; }
+  .rank-fill { height: 100%; background: #37d67a; border-radius: 3px; width: 75%; }
+  .rank-rp { font-size: 12px; text-align: right; color: #d5dde6; }
+  .weapons { display: flex; gap: 6px; margin-bottom: 8px; }
+  .weapon { flex: 1; background: rgba(10,12,18,0.72); border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; text-align: center; padding: 5px 2px 4px; }
+  .weapon.active { border-color: #ffd23e; box-shadow: 0 0 0 1px #ffd23e; }
+  .w-num { font-size: 10px; color: #9aa7b5; }
+  .w-icon { font-size: 19px; line-height: 1.2; }
+  .w-name { font-size: 10px; font-weight: 800; }
+  .w-ammo { font-size: 10px; color: #ffd23e; }
+  .crew { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 8px 10px; }
+  .crew-key { width: 30px; height: 30px; border-radius: 50%; color: #111; font-weight: 900; display: flex; align-items: center; justify-content: center; font-size: 14px; flex: none; }
+  .crew-body { flex: 1; }
+  .crew-name { font-weight: 900; font-size: 14px; }
+  .crew-who { font-size: 12px; color: #cfd8e3; }
+  .crew-btn { font-size: 11px; border: 1px solid rgba(255,255,255,0.35); border-radius: 5px; padding: 2px 7px; color: #fff; }
+  /* bottom-right: speedometer */
+  .br { position: absolute; right: 16px; bottom: 20px; text-align: right; }
+  .speed { font-size: 56px; font-weight: 900; line-height: 0.9; text-shadow: 0 3px 0 rgba(0,0,0,0.5); }
+  .speed-unit { font-size: 14px; font-weight: 800; color: #d5dde6; }
+  .car-name { font-size: 17px; font-weight: 900; color: #37d67a; margin-top: 4px; }
+  .dented { font-size: 13px; font-weight: 800; color: #ffd23e; }
+  .radio { font-size: 12px; color: #cfd8e3; margin-top: 2px; }
+  /* dialogue, bottom-centre */
+  .dialogue { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); width: 560px; display: flex; gap: 12px; align-items: center; }
+  .dlg-avatar { width: 46px; height: 46px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; color: #111; flex: none; }
+  .dlg-name { font-weight: 900; font-size: 15px; }
+  .dlg-text { font-size: 14px; line-height: 1.35; color: #e8e8e8; }
+  /* map shot: route banner + district labels */
+  .route { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); text-align: center; display: none; }
+  .route-title { font-size: 17px; font-weight: 900; color: #ffd23e; letter-spacing: 1px; }
+  .route-sub { font-size: 13px; color: #e8e8e8; margin-top: 2px; }
+  .map-labels { position: absolute; inset: 0; display: none; }
+  .map-title { position: absolute; left: 50%; top: 64px; transform: translateX(-50%); text-align: center; font-size: 58px; font-weight: 900; letter-spacing: 2px; color: #ffe9b0; text-shadow: 0 3px 0 rgba(120,40,0,0.55), 0 0 24px rgba(255,180,80,0.5); }
+  .map-title span { display: block; font-size: 15px; letter-spacing: 6px; color: #fff; margin-top: 2px; }
+  .map-label { position: absolute; font-size: 24px; font-weight: 900; color: #ffe9b0; text-shadow: 0 2px 0 rgba(0,0,0,0.55); transform: translate(-50%, -50%); text-align: center; }
+  .map-label span { display: block; font-size: 12px; letter-spacing: 3px; color: #fff; }
+  .drive-hint { position: fixed; top: 46%; left: 50%; transform: translateX(-50%); background: rgba(10,12,18,0.8); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; font-size: 14px; padding: 10px 16px; z-index: 10; transition: opacity 1s; pointer-events: none; }
+</style>
+</head>
+<body>
+<script src="vendor/three.min.js"></script>
+<script src="src/car.js"></script>
+<script src="src/heli.js"></script>
+<script src="src/world.js"></script>
+<script src="src/missions.js"></script>
+<script src="src/hud.js"></script>
+<script src="src/shots.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>
